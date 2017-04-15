@@ -100,10 +100,6 @@ def generate_trials(exp):
         schedules = json.load(fid)
         schedule = schedules[exp.p.schedule]
 
-    # Define the permutations of motion directions within the segments
-    # Note that 3 bar segments is hardcoded here
-    mot_choices = list(itertools.permutations([1, 0, 0]))
-
     # Define valid motion angles for each bar orientation
     ori_to_dir_map = dict(h=[0, 180], v=[90, 270])
 
@@ -119,13 +115,10 @@ def generate_trials(exp):
         # Inner iteration loop is over steps within the traversal
         for step, pos in enumerate(positions, 1):
 
-            # Determine the angular direction of motion across the bar
-            mot_idx = flexible_values(mot_choices)
+            odd_segment = flexible_values([0, 1, 2])
             trial_dirs = np.random.permutation(ori_to_dir_map[ori]) 
-            dot_dirs = trial_dirs[np.array(mot_idx)]
-
-            # Determine whether there is an odd segment (used for the task)
-            odd_segment = mot_idx.index(1)
+            dot_dirs = [trial_dirs[1] if i == odd_segment else trial_dirs[0]
+                        for i in range(3)]
 
             info = exp.trial_info(
 
