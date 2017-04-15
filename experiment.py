@@ -3,8 +3,8 @@ import json
 import itertools
 
 import numpy as np
-import pandas as pd
 
+from psychopy import event
 from visigoth import flexible_values
 from visigoth.stimuli import Point, RandomDotMotion
 
@@ -102,7 +102,7 @@ def generate_trials(exp):
 
     # Define the permutations of motion directions within the segments
     # Note that 3 bar segments is hardcoded here
-    mot_choices = list(itertools.combinations_with_replacement((0, 1), 3))
+    mot_choices = list(itertools.permutations([1, 0, 0]))
 
     # Define valid motion angles for each bar orientation
     ori_to_dir_map = dict(h=[0, 180], v=[90, 270])
@@ -120,11 +120,12 @@ def generate_trials(exp):
         for step, pos in enumerate(positions, 1):
 
             # Determine the angular direction of motion across the bar
-            mot_idxs = np.random.permutation(flexible_values(mot_choices))
-            dot_dirs = np.array(ori_to_dir_map[ori])[mot_idxs]
+            mot_idx = flexible_values(mot_choices)
+            trial_dirs = np.random.permutation(ori_to_dir_map[ori]) 
+            dot_dirs = trial_dirs[np.array(mot_idx)]
 
             # Determine whether there is an odd segment (used for the task)
-            odd_segment = np.unique(dot_dirs).size > 1
+            odd_segment = mot_idx.index(1)
 
             info = exp.trial_info(
 
