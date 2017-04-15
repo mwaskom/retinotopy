@@ -74,12 +74,12 @@ class DotBar(object):
 
 
 def create_stimuli(exp):
-
+    """Define stimulus objects."""
     # Fixation point
     fix = Point(exp.win,
                 exp.p.fix_pos,
                 exp.p.fix_radius,
-                exp.p.fix_trial_color)
+                exp.p.fix_color)
 
     # Ensemble of random dot stimuli
     dots = DotBar(exp)
@@ -88,34 +88,42 @@ def create_stimuli(exp):
 
 
 def define_cmdline_params(self, parser):
-
+    """Choose the traversal schedule at runtime on command line."""
     parser.add_argument("--schedule", required=True)
 
 
 def generate_trials(exp):
 
+    # Load a file to determine the order of bar traversals
+    # This lets us externally optimize/balance and repeat runs
     with open("schedules.json") as fid:
         schedules = json.load(fid)
         schedule = schedules[exp.p.schedule]
 
+    # Define the permutations of motion directions within the segments
+    # Note that 3 bar segments is hardcoded here
     mot_choices = list(itertools.combinations_with_replacement((0, 1), 3))
 
+    # Define valid motion angles for each bar orientation
+    ori_to_dir_map = dict(h=[0, 180], v=[90, 270])
+
+    # Outer iteration loop is over bar traversals
     for ori, dir in schedule:
 
+        # Define the step positions
         if dir == "p":
             positions = np.linspace(-1, 1, exp.p.traversal_steps)
         elif dir == "n":
             positions = np.linspace(1, -1, exp.p.traversal_steps)
 
+        # Inner iteration loop is over steps within the traversal
         for step, pos in enumerate(positions, 1):
 
-            mot_dirs = np.random.permutation(flexible_values(mot_choices))
+            # Determine the angular direction of motion across the bar
+            mot_idxs = np.random.permutation(flexible_values(mot_choices))
+            dot_dirs = np.array(ori_to_dir_map[ori])[mot_idxs]
 
-            if ori == "h":
-                dot_dirs = np.array([0, 180])[mot_dirs]
-            elif ori == "v":
-                dot_dirs = np.array([90, 270])[mot_dirs]
-
+            # Determine whether there is an odd segment (used for the task)
             odd_segment = np.unique(dot_dirs).size > 1
 
             info = exp.trial_info(
@@ -138,7 +146,8 @@ def run_trial(exp, info):
     exp.s.dots.set_position(info.bar_ori, info.bar_pos)
     exp.s.dots.reset()
 
-    for _ in range(90):
+    trial_dur = exp.p.traversal_duration / exp.p.traversal_steps
+    for i in exp.frame_range(seconds=trial_dur):
 
         exp.s.dots.update(info.dot_dirs, .5)
         exp.draw(["dots", "fix"])
