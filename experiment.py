@@ -4,7 +4,7 @@ import itertools
 
 import numpy as np
 
-from psychopy import event
+from psychopy import core, event
 from visigoth import flexible_values
 from visigoth.stimuli import Point, RandomDotMotion
 
@@ -129,6 +129,7 @@ def generate_trials(exp):
 
                 dot_dirs=dot_dirs,
                 odd_segment=odd_segment,
+                odd_dir=dot_dirs[odd_segment],
 
             )
 
@@ -140,10 +141,34 @@ def run_trial(exp, info):
     exp.s.dots.set_position(info.bar_ori, info.bar_pos)
     exp.s.dots.reset()
 
+    trial_clock = core.Clock()
+
     trial_dur = exp.p.traversal_duration / exp.p.traversal_steps
     for i in exp.frame_range(seconds=trial_dur):
 
+        if trial_clock.getTime() < exp.p.wait_accept_resp:
+            keys = event.getKeys(exp.p.key_names,
+                                 timeStamped=trial_clock)
+        else:
+            keys = []
+
+        if keys:
+            used_key, timestamp = keys[0]
+            info["responsed"] = True
+            info["response"] = used_key
+            info["rt"] = timestamp
+            if exp.p.key_names.index(used_key) == info.odd_segment:
+                info["correct"] = True
+                info["result"] = "correct"
+            else:
+                info["correct"] = False
+                info["result"] = "wrong"
+
+            exp.show_feedback("fix", info.result)
+
         exp.s.dots.update(info.dot_dirs, .5)
         exp.draw(["dots", "fix"])
+
+    exp.s.fix.color = exp.p.fix_color
 
     return info

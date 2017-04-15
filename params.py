@@ -9,6 +9,8 @@ base = dict(
     bar_width=1,
     bar_segment_gap=.5,
 
+    key_names=["left", "down", "right"],
+
     traversal_duration=18,
     traversal_steps=12,
 
@@ -19,5 +21,7 @@ base = dict(
     dot_density=30,
     dot_speed=5,
     dot_interval=3,
+
+    wait_accept_resp = .25,
 
 )
