@@ -153,16 +153,11 @@ def run_trial(exp, info):
 
     for i in exp.frame_range(seconds=info.trial_dur):
 
-        # Check for keypresses after certain amount of time has elapsed
-        # this avoids catching late responses to the previous trial
-        if trial_clock.getTime() < exp.p.wait_accept_resp:
-            keys = event.getKeys(exp.p.key_names,
-                                 timeStamped=trial_clock)
-        else:
-            keys = []
+        # Pull relevant keypresses off the input buffer
+        keys = event.getKeys(exp.p.key_names, timeStamped=trial_clock)
 
-        # Process keypresses
-        if keys:
+        # Process keypresses, only after a certain time has elapsed
+        if keys and trial_clock.getTime() > exp.wait_accept_resp:
 
             used_key, timestamp = keys[0]
             info["responsed"] = True
