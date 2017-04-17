@@ -23,6 +23,9 @@ class DotBar(object):
 
         # Note that this code is written flexibly w.r.t number of segments but
         # it is being hardcoded at 3 here and not exposed in the params
+        # Also note that hardcoding of 3 segments is baked into the trial
+        # control code below; adapting the whole experiment to > 3 segments
+        # will not be trivial
 
         self.n_segments = n = 3
         segment_length = exp.p.field_size / n
@@ -120,7 +123,7 @@ def generate_trials(exp):
         for step, pos in enumerate(positions, 1):
 
             odd_segment = flexible_values([0, 1, 2])
-            trial_dirs = np.random.permutation(ori_to_dir_map[ori]) 
+            trial_dirs = np.random.permutation(ori_to_dir_map[ori])
             dot_dirs = [trial_dirs[1] if i == odd_segment else trial_dirs[0]
                         for i in range(3)]
 
@@ -157,7 +160,7 @@ def run_trial(exp, info):
         keys = event.getKeys(exp.p.key_names, timeStamped=trial_clock)
 
         # Process keypresses, only after a certain time has elapsed
-        if keys and trial_clock.getTime() > exp.wait_accept_resp:
+        if keys and trial_clock.getTime() > exp.p.wait_accept_resp:
 
             used_key, timestamp = keys[0]
             info["responsed"] = True
@@ -175,8 +178,15 @@ def run_trial(exp, info):
             # Change fixation point color to give feedback
             exp.show_feedback("fix", info.result)
 
+            # TODO we should give feedback on fixation somehow
+            # We don't want to end the trial as we normally would, but we
+            # should provide some signal when the eye wanders too far outside
+            # the fixation window. (While allowing blinks).
+
         # Draw the nexst frame of the stimulus
-        exp.s.dots.update(info.dot_dirs, .5)  # TODO note fixed coherence
+        # TODO note fixed coherence. We want to decide if we want to staircase
+        # or if not how we want to control difficulty
+        exp.s.dots.update(info.dot_dirs, .5)
         exp.draw(["dots", "fix"])
 
     # Reset the fixation color for the next trial
