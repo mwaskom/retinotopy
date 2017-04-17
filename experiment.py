@@ -40,7 +40,7 @@ class DotBar(object):
 
             if ori == "v":
                 posx = rel_pos * self.exp.p.field_size / 2
-                posy = self.segment_offsets[i]
+                posy = self.segment_offsets[::-1][i]
                 pos = posx, posy
                 aperture = self.segment_width, self.segment_length
             elif ori == "h":
