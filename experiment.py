@@ -140,6 +140,10 @@ def generate_trials(exp):
 
                 trial_dur=trial_dur,
 
+                # TODO note fixed coherence. We want to decide if we want to
+                # staircase or if not how we want to control difficulty
+                coherence=.5,
+
             )
 
             yield info
@@ -183,10 +187,8 @@ def run_trial(exp, info):
             # should provide some signal when the eye wanders too far outside
             # the fixation window. (While allowing blinks).
 
-        # Draw the nexst frame of the stimulus
-        # TODO note fixed coherence. We want to decide if we want to staircase
-        # or if not how we want to control difficulty
-        exp.s.dots.update(info.dot_dirs, .5)
+        # Draw the next frame of the stimulus
+        exp.s.dots.update(info.dot_dirs, info.coherence)
         exp.draw(["dots", "fix"])
 
     # Reset the fixation color for the next trial
