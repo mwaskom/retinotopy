@@ -1,6 +1,5 @@
 from __future__ import division
 import json
-import itertools
 
 import numpy as np
 
@@ -103,7 +102,12 @@ def generate_trials(exp):
     # Define valid motion angles for each bar orientation
     ori_to_dir_map = dict(h=[0, 180], v=[90, 270])
 
+    # Determine the length of each trial
+    # (currently fixed across the run but useful to have here)
+    trial_dur = exp.p.traversal_duration / exp.p.traversal_steps
+
     # Outer iteration loop is over bar traversals
+    # As specified by an orientation of the bar and a direction of its steps
     for ori, dir in schedule:
 
         # Define the step positions
@@ -131,6 +135,8 @@ def generate_trials(exp):
                 odd_segment=odd_segment,
                 odd_dir=dot_dirs[odd_segment],
 
+                trial_dur=trial_dur,
+
             )
 
             yield info
@@ -138,25 +144,32 @@ def generate_trials(exp):
 
 def run_trial(exp, info):
 
+    # Set the position of the stimulus for this "trial"
     exp.s.dots.set_position(info.bar_ori, info.bar_pos)
     exp.s.dots.reset()
 
+    # Initialize a clock to track RT
     trial_clock = core.Clock()
 
-    trial_dur = exp.p.traversal_duration / exp.p.traversal_steps
-    for i in exp.frame_range(seconds=trial_dur):
+    for i in exp.frame_range(seconds=info.trial_dur):
 
+        # Check for keypresses after certain amount of time has elapsed
+        # this avoids catching late responses to the previous trial
         if trial_clock.getTime() < exp.p.wait_accept_resp:
             keys = event.getKeys(exp.p.key_names,
                                  timeStamped=trial_clock)
         else:
             keys = []
 
+        # Process keypresses
         if keys:
+
             used_key, timestamp = keys[0]
             info["responsed"] = True
             info["response"] = used_key
             info["rt"] = timestamp
+
+            # Determine accuracy of the response
             if exp.p.key_names.index(used_key) == info.odd_segment:
                 info["correct"] = True
                 info["result"] = "correct"
@@ -164,11 +177,14 @@ def run_trial(exp, info):
                 info["correct"] = False
                 info["result"] = "wrong"
 
+            # Change fixation point color to give feedback
             exp.show_feedback("fix", info.result)
 
-        exp.s.dots.update(info.dot_dirs, .5)
+        # Draw the nexst frame of the stimulus
+        exp.s.dots.update(info.dot_dirs, .5)  # TODO note fixed coherence
         exp.draw(["dots", "fix"])
 
+    # Reset the fixation color for the next trial
     exp.s.fix.color = exp.p.fix_color
 
     return info
