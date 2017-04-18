@@ -180,7 +180,8 @@ def run_trial(exp, info):
                 info["result"] = "wrong"
 
             # Change fixation point color to give feedback
-            exp.show_feedback("fix", info.result)
+            if exp.p.show_response_feedback:
+                exp.show_feedback("fix", info.result)
 
             # TODO we should give feedback on fixation somehow
             # We don't want to end the trial as we normally would, but we

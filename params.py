@@ -24,4 +24,9 @@ base = dict(
 
     wait_accept_resp = .25,
 
+    target_acc=.9,
+
+    show_response_feedback=True,
+    show_fixation_feedback=True,
+
 )
