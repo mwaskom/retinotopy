@@ -3,7 +3,7 @@ import json
 
 import numpy as np
 
-from psychopy import core, event
+from psychopy import core, event, data
 from visigoth import flexible_values
 from visigoth.stimuli import Point, RandomDotMotion
 
@@ -92,6 +92,7 @@ def create_stimuli(exp):
 def define_cmdline_params(self, parser):
     """Choose the traversal schedule at runtime on command line."""
     parser.add_argument("--schedule", required=True)
+    parser.add_argument("--init-coherence", default=.2, type=float)
 
 
 def generate_trials(exp):
@@ -109,6 +110,15 @@ def generate_trials(exp):
     # (currently fixed across the run but useful to have here)
     trial_dur = exp.p.traversal_duration / exp.p.traversal_steps
 
+    # Define a staircase to control coherence
+    exp.staircase = data.StairHandler(np.log10(exp.p.init_coherence),
+                                      nUp=exp.p.stair_n_up,
+                                      nDown=exp.p.stair_n_down,
+                                      nTrials=np.inf,
+                                      maxVal=0,
+                                      stepType="lin",
+                                      stepSizes=exp.p.stair_step)
+
     # Outer iteration loop is over bar traversals
     # As specified by an orientation of the bar and a direction of its steps
     for ori, dir in schedule:
@@ -118,6 +128,9 @@ def generate_trials(exp):
             positions = np.linspace(-1, 1, exp.p.traversal_steps)
         elif dir == "n":
             positions = np.linspace(1, -1, exp.p.traversal_steps)
+
+        # Define the coherence for this trial
+        coherence=10 ** exp.staircase.next(),
 
         # Inner iteration loop is over steps within the traversal
         for step, pos in enumerate(positions, 1):
@@ -140,9 +153,7 @@ def generate_trials(exp):
 
                 trial_dur=trial_dur,
 
-                # TODO note fixed coherence. We want to decide if we want to
-                # staircase or if not how we want to control difficulty
-                coherence=.5,
+                coherence=coherence,
 
             )
 
@@ -164,10 +175,11 @@ def run_trial(exp, info):
         keys = event.getKeys(exp.p.key_names, timeStamped=trial_clock)
 
         # Process keypresses, only after a certain time has elapsed
+        # TODO don't re-process keypresses after first response
         if keys and trial_clock.getTime() > exp.p.wait_accept_resp:
 
             used_key, timestamp = keys[0]
-            info["responsed"] = True
+            info["responded"] = True
             info["response"] = used_key
             info["rt"] = timestamp
 
@@ -194,5 +206,10 @@ def run_trial(exp, info):
 
     # Reset the fixation color for the next trial
     exp.s.fix.color = exp.p.fix_color
+
+    # Update the staircase based on performance
+    # TODO decide how we want to handle non-responses
+    if info["responded"]:
+        exp.staircase.addResponse(info["correct"])
 
     return info
