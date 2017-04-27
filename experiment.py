@@ -129,12 +129,13 @@ def generate_trials(exp):
         elif dir == "n":
             positions = np.linspace(1, -1, exp.p.traversal_steps)
 
-        # Define the coherence for this trial
-        coherence=10 ** exp.staircase.next(),
-
         # Inner iteration loop is over steps within the traversal
         for step, pos in enumerate(positions, 1):
 
+            # Define the coherence for this trial
+            coherence=10 ** exp.staircase.next()
+
+            # Determine the stimulus parameters for this trial
             odd_segment = flexible_values([0, 1, 2])
             trial_dirs = np.random.permutation(ori_to_dir_map[ori])
             dot_dirs = [trial_dirs[1] if i == odd_segment else trial_dirs[0]
