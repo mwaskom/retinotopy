@@ -169,6 +169,10 @@ def run_trial(exp, info):
     # Initialize a clock to track RT
     trial_clock = core.Clock()
 
+    # Keep track of whether the trial has had a fixation break so we only
+    # trigger fixation feedback once
+    fix_broken = False
+
     for i in exp.frame_range(seconds=info.trial_dur):
 
         # Pull relevant keypresses off the input buffer
@@ -197,7 +201,8 @@ def run_trial(exp, info):
         # We don't want to end the trial as we normally would, but we
         # should provide some signal when the eye wanders too far outside
         # the fixation window. (While allowing blinks).
-        if not exp.check_fixation(allow_blinks=True):
+        if not exp.check_fixation(allow_blinks=True) and not fix_broken:
+            fix_broken = True
             exp.sounds.fixbreak.play()
 
         # Draw the next frame of the stimulus
