@@ -185,11 +185,9 @@ def run_trial(exp, info):
 
             # Determine accuracy of the response
             if exp.p.key_names.index(used_key) == info.odd_segment:
-                info["correct"] = True
-                info["result"] = "correct"
+                info[["correct", "result"]] = True, "correct"
             else:
-                info["correct"] = False
-                info["result"] = "wrong"
+                info[["correct", "result"]] = False, "wrong"
 
             # Change fixation point color to give feedback
             if exp.p.show_response_feedback:
@@ -199,6 +197,9 @@ def run_trial(exp, info):
             # We don't want to end the trial as we normally would, but we
             # should provide some signal when the eye wanders too far outside
             # the fixation window. (While allowing blinks).
+            if not exp.check_fixation(allow_blinks=True):
+                exp.sounds.fixbreak.play()
+            
 
         # Draw the next frame of the stimulus
         exp.s.dots.update(info.dot_dirs, info.coherence)
