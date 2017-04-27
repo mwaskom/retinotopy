@@ -23,7 +23,7 @@ base = dict(
     dot_interval=3,
 
     stair_n_up=1,
-    stair_n_down=3,
+    stair_n_down=2,
     stair_step=.02,  # Note steps are done in log space
 
     wait_accept_resp = .25,
