@@ -180,9 +180,13 @@ def run_trial(exp, info):
         # Pull relevant keypresses off the input buffer
         keys = event.getKeys(exp.p.key_names, timeStamped=trial_clock)
 
-        # Process keypresses, only after a certain time has elapsed
-        # TODO don't re-process keypresses after first response
-        if keys and trial_clock.getTime() > exp.p.wait_accept_resp:
+        # Only check responses after certain time has elapsed
+        # and if there hasn't been a response in this trial
+        check_keys = (trial_clock.getTime() > exp.p.wait_accept_resp
+                      and not info["responded"])
+
+        # Process keypresses
+        if keys and check_keys:
 
             used_key, timestamp = keys[0]
             info["responded"] = True
