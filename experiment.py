@@ -156,6 +156,8 @@ def generate_trials(exp):
 
                 coherence=coherence,
 
+                fix_broken=np.nan,
+
             )
 
             yield info
@@ -170,8 +172,7 @@ def run_trial(exp, info):
     # Initialize a clock to track RT
     trial_clock = core.Clock()
 
-    # Keep track of whether the trial has had a fixation break so we only
-    # trigger fixation feedback once
+    # Keep track of whether the trial has had a fixation break
     fix_broken = False
 
     for i in exp.frame_range(seconds=info.trial_dur):
@@ -202,6 +203,7 @@ def run_trial(exp, info):
         # We don't want to end the trial as we normally would, but we
         # should provide some signal when the eye wanders too far outside
         # the fixation window. (While allowing blinks).
+        # Currently doing a fixbreak click, but that's not helpful in scanner
         if not exp.check_fixation(allow_blinks=True) and not fix_broken:
             fix_broken = True
             exp.sounds.fixbreak.play()
@@ -212,6 +214,9 @@ def run_trial(exp, info):
 
     # Reset the fixation color for the next trial
     exp.s.fix.color = exp.p.fix_color
+
+    # Log fixation performance
+    info["fix_broken"] = fix_broken
 
     # Update the staircase based on performance
     # TODO decide how we want to handle non-responses
