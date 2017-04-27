@@ -28,9 +28,7 @@ base = dict(
 
     wait_accept_resp = .25,
 
-    # TODO if we staircase, we should maybe change the feedback to be
-    # coherence level achieved (since accuracy will be held constant)
-    perform_acc_target=.9,
+    perform_coh_target=.3,
 
     show_response_feedback=True,
     show_fixation_feedback=True,

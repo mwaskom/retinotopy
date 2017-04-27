@@ -2,8 +2,9 @@ from __future__ import division
 import json
 
 import numpy as np
+import pandas as pd
 
-from psychopy import core, event, data
+from psychopy import core, visual, event, data
 from visigoth import flexible_values
 from visigoth.stimuli import Point, RandomDotMotion
 
@@ -228,3 +229,45 @@ def run_trial(exp, info):
         exp.staircase.addResponse(info["correct"])
 
     return info
+
+
+def compute_performance(exp):
+    """Determine average coherence on the final bar sweep."""
+    df = pd.DataFrame(exp.trial_data)
+    final_coh = df.iloc[-exp.p.traversal_steps:]["coherence"].mean()
+    return final_coh,
+
+
+def show_performance(exp, final_coh):
+    """Report the coherence achieved at the end of the run."""
+    lines = ["End of the run!", ""]
+
+    null_values = None, np.nan
+    if final_coh in null_values:
+        visual.TextStim(exp.win, lines[0],
+                        pos=(0, 0), height=.5).draw()
+        exp.win.flip()
+        return
+
+    target_coh = exp.p.perform_coh_target
+
+    if final_coh <= exp.p.init_coherence:
+        verb = "got down"
+    else:
+        verb = "went up"
+
+    lines.append(
+        "You {} to {:.0%} signal".format(verb, final_coh)
+        )
+    if final_coh <= target_coh:
+        lines.extend(["", "Great job!"])
+    else:
+        lines.extend(["", "Please try to be more accurate!"])
+
+    n = len(lines)
+    height = .5
+    heights = (np.arange(n)[::-1] - (n / 2 - .5)) * height
+    for line, y in zip(lines, heights):
+        visual.TextStim(exp.win, line,
+                        pos=(0, y), height=height).draw()
+    exp.win.flip()
