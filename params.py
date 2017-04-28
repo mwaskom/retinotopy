@@ -11,8 +11,8 @@ base = dict(
 
     key_names=["left", "down", "right"],
 
-    traversal_duration=24,
-    traversal_steps=18,
+    traversal_duration=32,
+    traversal_steps=16,
 
     monitor_eye=True,
 
