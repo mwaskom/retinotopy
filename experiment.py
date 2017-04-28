@@ -225,7 +225,7 @@ def run_trial(exp, info):
 
     # Update the staircase based on performance
     # TODO decide how we want to handle non-responses
-    if info["responded"]:
+    if info["responded"] and info["bar_step"] > 1:
         exp.staircase.addResponse(info["correct"])
 
     return info
