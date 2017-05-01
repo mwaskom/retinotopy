@@ -216,7 +216,7 @@ def run_trial(exp, info):
         # Draw the next frame of the stimulus
         coherence = [0, 0, 0]
         coherence[info.odd_segment] = info.coherence
-        exp.s.dots.update(info.dot_dirs, info.coherence)
+        exp.s.dots.update(info.dot_dirs, coherence)
         exp.draw(["dots", "fix"])
 
     # Reset the fixation color for the next trial
