@@ -65,9 +65,9 @@ class DotBar(object):
         for stim in self.stims:
             stim.reset()
 
-    def update(self, dirs, coh):
+    def update(self, dirs, cohs):
 
-        for dir, stim in zip(dirs, self.stims):
+        for dir, stim, coh in zip(dirs, self.stims, cohs):
             stim.update(dir, coh)
 
     def draw(self):
@@ -214,6 +214,8 @@ def run_trial(exp, info):
             exp.sounds.fixbreak.play()
 
         # Draw the next frame of the stimulus
+        coherence = [0, 0, 0]
+        coherence[info.odd_segment] = info.coherence
         exp.s.dots.update(info.dot_dirs, info.coherence)
         exp.draw(["dots", "fix"])
 
