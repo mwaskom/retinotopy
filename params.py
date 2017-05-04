@@ -14,6 +14,8 @@ base = dict(
     traversal_duration=32,
     traversal_steps=16,
 
+    wait_iti=0,
+
     monitor_eye=True,
 
     dot_size=.1,

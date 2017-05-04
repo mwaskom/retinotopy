@@ -110,6 +110,7 @@ def generate_trials(exp):
     # Determine the length of each trial
     # (currently fixed across the run but useful to have here)
     trial_dur = exp.p.traversal_duration / exp.p.traversal_steps
+    stim_dur = trial_dur - exp.p.wait_iti
 
     # Define a staircase to control coherence
     exp.staircase = data.StairHandler(np.log10(exp.p.init_coherence),
@@ -154,6 +155,7 @@ def generate_trials(exp):
                 odd_dir=dot_dirs[odd_segment],
 
                 trial_dur=trial_dur,
+                stim_dur=stim_dur,
 
                 coherence=coherence,
 
@@ -170,13 +172,16 @@ def run_trial(exp, info):
     exp.s.dots.set_position(info.bar_ori, info.bar_pos)
     exp.s.dots.reset()
 
+    # Pause for the inter-trial interval
+    exp.wait_until(exp.iti_end, draw="fix", iti_duration=exp.p.wait_iti)
+
     # Initialize a clock to track RT
     trial_clock = core.Clock()
 
     # Keep track of whether the trial has had a fixation break
     fix_broken = False
 
-    for i in exp.frame_range(seconds=info.trial_dur):
+    for i in exp.frame_range(seconds=info.stim_dur):
 
         # Pull relevant keypresses off the input buffer
         keys = event.getKeys(exp.p.key_names, timeStamped=trial_clock)
