@@ -163,6 +163,7 @@ def generate_trials(exp):
 
             # Possibly schedule a blank period
             blank_period = (exp.p.blank_interval is not None
+                            and traversal > 0
                             and (traversal % exp.p.blank_interval) == 0
                             and step == 1)
 
