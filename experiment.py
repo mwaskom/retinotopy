@@ -212,14 +212,12 @@ def run_trial(exp, info):
             if exp.p.show_response_feedback:
                 exp.show_feedback("fix", info.result)
 
-        # TODO we should give feedback on fixation somehow
-        # We don't want to end the trial as we normally would, but we
-        # should provide some signal when the eye wanders too far outside
-        # the fixation window. (While allowing blinks).
-        # Currently doing a fixbreak click, but that's not helpful in scanner
+        # Give auditory feedback on fixation
+        # (visual feedback is handled independently)
         if not exp.check_fixation(allow_blinks=True) and not fix_broken:
             fix_broken = True
-            exp.sounds.fixbreak.play()
+            if exp.p.play_fixation_feedback:
+                exp.sounds.fixbreak.play()
 
         # Draw the next frame of the stimulus
         coherence = [0, 0, 0]
