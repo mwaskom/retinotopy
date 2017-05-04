@@ -92,7 +92,7 @@ def create_stimuli(exp):
 
 def define_cmdline_params(self, parser):
     """Choose the traversal schedule at runtime on command line."""
-    parser.add_argument("--schedule", required=True)
+    parser.add_argument("--schedule", default="a")
     parser.add_argument("--init-coherence", default=.2, type=float)
 
 
