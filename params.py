@@ -37,6 +37,6 @@ base = dict(
 
     show_response_feedback=True,
     show_fixation_feedback=True,
-    play_fixation_feedback=True,
+    play_fixation_feedback=False,
 
 )
