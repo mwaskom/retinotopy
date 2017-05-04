@@ -134,6 +134,9 @@ def generate_trials(exp):
         # Inner iteration loop is over steps within the traversal
         for step, pos in enumerate(positions, 1):
 
+            # Increment the experiment trial counter
+            exp.trial += 1
+
             # Define the coherence for this trial
             coherence=10 ** exp.staircase.next()
 
