@@ -76,6 +76,30 @@ class DotBar(object):
             stim.draw()
 
 
+class FixationRing(object):
+
+    def __init__(self, exp):
+
+        point = Point(exp.win,
+                      exp.p.fix_pos,
+                      exp.p.fix_radius * 1.5,
+                      exp.win.color)
+
+        self.exp = exp
+        self.point = point
+
+    def draw(self):
+
+        fixating = self.exp.check_fixation(allow_blinks=True)
+
+        if self.exp.p.show_fixation_feedback:
+            if fixating:
+                self.point.color = self.exp.win.color
+            else:
+                self.point.color = 1
+
+        self.point.draw()
+
 def create_stimuli(exp):
     """Define stimulus objects."""
     # Fixation point
@@ -83,6 +107,9 @@ def create_stimuli(exp):
                 exp.p.fix_pos,
                 exp.p.fix_radius,
                 exp.p.fix_color)
+
+    # Ring around the fixation point for fixation feedback
+    ring = FixationRing(exp)
 
     # Ensemble of random dot stimuli
     dots = DotBar(exp)
@@ -176,7 +203,8 @@ def run_trial(exp, info):
     exp.s.dots.reset()
 
     # Pause for the inter-trial interval
-    exp.wait_until(exp.iti_end, draw="fix", iti_duration=exp.p.wait_iti)
+    exp.wait_until(exp.iti_end, draw=["ring", "fix"],
+                   iti_duration=exp.p.wait_iti)
 
     # Initialize a clock to track RT
     trial_clock = core.Clock()
@@ -223,7 +251,7 @@ def run_trial(exp, info):
         coherence = [0, 0, 0]
         coherence[info.odd_segment] = info.coherence
         exp.s.dots.update(info.dot_dirs, coherence)
-        exp.draw(["dots", "fix"])
+        exp.draw(["dots", "ring", "fix"])
 
     # Reset the fixation color for the next trial
     exp.s.fix.color = exp.p.fix_color
