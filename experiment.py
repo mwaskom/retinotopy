@@ -137,7 +137,7 @@ def generate_trials(exp):
     # Determine the length of each trial
     # (currently fixed across the run but useful to have here)
     trial_dur = exp.p.traversal_duration / exp.p.traversal_steps
-    stim_dur = trial_dur - exp.p.wait_iti
+    stim_dur = trial_dur - exp.p.iti_dur
 
     # Define a staircase to control coherence
     exp.staircase = data.StairHandler(np.log10(exp.p.init_coherence),
@@ -150,7 +150,7 @@ def generate_trials(exp):
 
     # Outer iteration loop is over bar traversals
     # As specified by an orientation of the bar and a direction of its steps
-    for ori, dir in schedule:
+    for traversal, (ori, dir) in enumerate(schedule):
 
         # Define the step positions
         if dir == "p":
@@ -160,6 +160,16 @@ def generate_trials(exp):
 
         # Inner iteration loop is over steps within the traversal
         for step, pos in enumerate(positions, 1):
+
+            # Possibly schedule a blank period
+            blank_period = (exp.p.blank_interval is not None
+                            and (traversal % exp.p.blank_interval) == 0
+                            and step == 1)
+
+            if blank_period:
+                iti_dur = exp.p.iti_dur + exp.p.blank_dur
+            else:
+                iti_dur = exp.p.iti_dur
 
             # Increment the experiment trial counter
             exp.trial += 1
@@ -174,6 +184,8 @@ def generate_trials(exp):
                         for i in range(3)]
 
             info = exp.trial_info(
+
+                iti_dur=iti_dur,
 
                 bar_ori=ori,
                 bar_dir=dir,
@@ -204,7 +216,7 @@ def run_trial(exp, info):
 
     # Pause for the inter-trial interval
     exp.wait_until(exp.iti_end, draw=["ring", "fix"],
-                   iti_duration=exp.p.wait_iti)
+                   iti_duration=info.iti_dur)
 
     # Initialize a clock to track RT
     trial_clock = core.Clock()
