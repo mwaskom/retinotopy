@@ -30,7 +30,7 @@ base = dict(
 
     wait_accept_resp = .25,
 
-    perform_coh_target=.3,
+    perform_coh_target=.2,
 
     show_response_feedback=True,
     show_fixation_feedback=True,
