@@ -39,4 +39,20 @@ base = dict(
     show_fixation_feedback=True,
     play_fixation_feedback=False,
 
+    wait_pre_run=4,
+    run_duration=None,
+
+)
+
+scan = dict(
+
+    display_name="cbi-projector",
+
+    key_names=["4", "3", "2"],
+
+    trigger=["quoteleft", "grave"],
+
+    wait_pre_run=12,
+    run_duration=240,
+
 )
