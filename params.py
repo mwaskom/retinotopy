@@ -44,7 +44,8 @@ base = dict(
 
 )
 
-scan = dict(
+scan = base.copy()
+scan.update(
 
     display_name="cbi-projector",
 

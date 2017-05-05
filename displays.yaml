@@ -13,3 +13,11 @@ kianilab-ps1:
   refresh_hz: 75
   max_luminance: 110.864
   gamma: 1.938
+
+cbi-projector:
+  width: 32.4
+  distance: 58
+  resolution: [1024, 768]
+  refresh_hz: 60
+  gamma: 2.64
+  max_luminance: 83.9
