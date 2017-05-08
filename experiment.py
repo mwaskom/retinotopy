@@ -186,6 +186,8 @@ def generate_trials(exp):
 
             info = exp.trial_info(
 
+                traversal=traversal,
+
                 iti_dur=iti_dur,
 
                 bar_ori=ori,
@@ -203,6 +205,8 @@ def generate_trials(exp):
                 coherence=coherence,
 
                 fix_broken=np.nan,
+
+                stim_onset=np.nan,
 
             )
 
@@ -264,7 +268,10 @@ def run_trial(exp, info):
         coherence = [0, 0, 0]
         coherence[info.odd_segment] = info.coherence
         exp.s.dots.update(info.dot_dirs, coherence)
-        exp.draw(["dots", "ring", "fix"])
+        flip_time = exp.draw(["dots", "ring", "fix"])
+
+        if i == 0:
+            info["stim_onset"] = flip_time
 
     # Reset the fixation color for the next trial
     exp.s.fix.color = exp.p.fix_color
