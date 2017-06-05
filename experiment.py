@@ -138,6 +138,7 @@ def generate_trials(exp):
     # (currently fixed across the run but useful to have here)
     trial_dur = exp.p.traversal_duration / exp.p.traversal_steps
     stim_dur = trial_dur - exp.p.iti_dur
+    expected_onset = -trial_dur
 
     # Define a staircase to control coherence
     exp.staircase = data.StairHandler(np.log10(exp.p.init_coherence),
@@ -169,11 +170,14 @@ def generate_trials(exp):
 
             if blank_period:
                 iti_dur = exp.p.iti_dur + exp.p.blank_dur
+                expected_onset += exp.p.blank_dur
             else:
                 iti_dur = exp.p.iti_dur
 
             # Increment the experiment trial counter
             exp.trial += 1
+            expected_onset += trial_dur
+            expected_offset = expected_onset + trial_dur
 
             # Define the coherence for this trial
             coherence=10 ** exp.staircase.next()
@@ -207,6 +211,9 @@ def generate_trials(exp):
                 fix_broken=np.nan,
 
                 stim_onset=np.nan,
+                stim_offset=np.nan,
+                expected_onset=expected_onset,
+                expected_offset=expected_offset,
 
             )
 
@@ -229,7 +236,8 @@ def run_trial(exp, info):
     # Keep track of whether the trial has had a fixation break
     fix_broken = False
 
-    for i in exp.frame_range(seconds=info.stim_dur):
+    for i in exp.frame_range(seconds=info.stim_dur,
+                             expected_offset=info.expected_offset):
 
         # Pull relevant keypresses off the input buffer
         keys = event.getKeys(exp.p.key_names, timeStamped=trial_clock)
@@ -272,6 +280,9 @@ def run_trial(exp, info):
 
         if i == 0:
             info["stim_onset"] = flip_time
+
+    # Log the offset time
+    info["stim_offset"] = exp.clock.getTime()
 
     # Reset the fixation color for the next trial
     exp.s.fix.color = exp.p.fix_color
