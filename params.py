@@ -4,6 +4,8 @@ base = dict(
     display_name="laptop",
     display_luminance=0,
 
+    initialize_trial_generator=True,
+
     field_size=24,
 
     bar_width=1.5,

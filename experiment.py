@@ -149,6 +149,10 @@ def generate_trials(exp):
                                       stepType="lin",
                                       stepSizes=exp.p.stair_step)
 
+    # Stop here after initialization code
+    # Assumes that we have initialize_trial_generator=True in the params
+    yield
+
     # Outer iteration loop is over bar traversals
     # As specified by an orientation of the bar and a direction of its steps
     for traversal, (ori, dir) in enumerate(schedule):
