@@ -47,11 +47,11 @@ base = dict(
 scan = base.copy()
 scan.update(
 
-    display_name="cbi-projector",
+    display_name="cbi-propixx",
 
-    key_names=["4", "3", "2"],
+    key_names=["1", "2", "3"],
 
-    trigger=["quoteleft", "grave"],
+    trigger=["5"],
 
     wait_pre_run=12,
     run_duration=240,
