@@ -22,6 +22,7 @@ base = dict(
     blank_dur=12,
 
     monitor_eye=True,
+    fix_window=1.5,
 
     dot_size=.1,
     dot_color=1,
