@@ -90,15 +90,17 @@ class FixationRing(object):
 
     def draw(self):
 
-        fixating = self.exp.check_fixation(allow_blinks=True)
+        if self.exp.p.monitor_eye:
 
-        if self.exp.p.show_fixation_feedback:
-            if fixating:
-                self.point.color = self.exp.win.color
-            else:
-                self.point.color = 1
+            fixating = self.exp.check_fixation(allow_blinks=True)
 
-        self.point.draw()
+            if self.exp.p.show_fixation_feedback:
+                if fixating:
+                    self.point.color = self.exp.win.color
+                else:
+                    self.point.color = 1
+
+            self.point.draw()
 
 def create_stimuli(exp):
     """Define stimulus objects."""
@@ -271,10 +273,11 @@ def run_trial(exp, info):
 
         # Give auditory feedback on fixation
         # (visual feedback is handled independently)
-        if not exp.check_fixation(allow_blinks=True) and not fix_broken:
-            fix_broken = True
-            if exp.p.play_fixation_feedback:
-                exp.sounds.fixbreak.play()
+        if exp.p.monitor_eye:
+            if not exp.check_fixation(allow_blinks=True) and not fix_broken:
+                fix_broken = True
+                if exp.p.play_fixation_feedback:
+                    exp.sounds.fixbreak.play()
 
         # Draw the next frame of the stimulus
         coherence = [0, 0, 0]
