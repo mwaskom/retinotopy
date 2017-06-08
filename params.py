@@ -56,7 +56,7 @@ scan.update(
 
     trigger=["5"],
 
-    wait_pre_run=12,
+    wait_pre_run=0,
     draw_pre_run="fix",
 
     run_duration=240,
