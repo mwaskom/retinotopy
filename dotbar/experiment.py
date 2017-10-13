@@ -1,4 +1,5 @@
 from __future__ import division
+import os
 import json
 
 import numpy as np
@@ -129,7 +130,8 @@ def generate_trials(exp):
 
     # Load a file to determine the order of bar traversals
     # This lets us externally optimize/balance and repeat runs
-    with open("schedules.json") as fid:
+    this_dir = os.path.dirname(__file__)
+    with open(os.path.join(this_dir, "schedules.json")) as fid:
         schedules = json.load(fid)
         schedule = schedules[exp.p.schedule]
 

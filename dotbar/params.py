@@ -1,7 +1,7 @@
 
 base = dict(
 
-    display_name="laptop",
+    display_name="macbook-air",
     display_luminance=0,
 
     initialize_trial_generator=True,
@@ -50,7 +50,7 @@ base = dict(
 scan = base.copy()
 scan.update(
 
-    display_name="cbi-propixx",
+    display_name="nyu-cbi-propixx",
 
     key_names=["1", "2", "3"],
 
