@@ -31,6 +31,7 @@ class RetBar(object):
             sfs=element_sf,
 
         )
+        self.array.pedestal_contrs = 1
         self.update_elements()
 
         self.edges = [
