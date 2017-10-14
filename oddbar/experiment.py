@@ -1,7 +1,9 @@
 import numpy as np
-from psychopy import visual
+import pandas as pd
+from psychopy import visual, event
 from visigoth.stimuli import Point
 from stimuli import RetBar
+
 
 def create_stimuli(exp):
 
@@ -19,6 +21,7 @@ def create_stimuli(exp):
         exp.p.fix_color
     )
 
+    # TODO incorporate fixation drift warning for training?
     ring = Point(
         exp.win,
         exp.p.fix_pos,
@@ -41,13 +44,13 @@ def create_stimuli(exp):
 
 def generate_trials(exp):
 
-    yield {}
-
-
-def run_trial(exp, info):
+    def steps(start, end, a, n):
+        x = np.linspace(start[0], end[0], n)
+        y = np.linspace(start[1], end[1], n)
+        a = np.full(n, a, np.float)
+        return np.stack([x, y, a], 1)
 
     field_radius = exp.p.field_size / 2
-
     diag = np.cos(np.pi / 4) * field_radius
 
     L = -field_radius, 0
@@ -60,53 +63,81 @@ def run_trial(exp, info):
     BR = +diag, -diag
     C = 0, 0
 
-    def steps(start, end, n):
-        x = np.linspace(start[0], end[0], n)
-        y = np.linspace(start[1], end[1], n)
-        return np.stack([x, y], 1)
-
-    step_pos = [
-        steps(L, R, 16), steps(BR, C, 8), None,
-        steps(T, B, 16), steps(BL, C, 8), None,
-        steps(R, L, 16), steps(TL, C, 8), None,
-        steps(B, T, 16), steps(TR, C, 8), None,
+    steps = [
+        steps(L, R, 90, 16), steps(BR, C, 45, 8), None,
+        steps(T, B, 0, 16), steps(BL, C, -45, 8), None,
+        steps(R, L, 90, 16), steps(TL, C, 45, 8), None,
+        steps(B, T, 0, 16), steps(TR, C, -45, 8), None,
     ]
 
-    step_angles = [
-        90, 45, None,
-        0, -45, None,
-        90, 45, None,
-        0, -45, None,
-    ]
+    yield steps
 
-    blank_duration = 12  # TODO
+
+def run_trial(exp, info):
 
     framerate = exp.win.framerate
-    update_frames = set(np.arange(0,
-                                  exp.p.step_duration * framerate,
-                                  framerate / exp.p.update_rate))
 
-    for pos_list, angle in zip(step_pos, step_angles):
+    frames_per_step = exp.p.step_duration * framerate
+    frames_per_update = framerate / exp.p.update_rate
+    update_frames = set(np.arange(0, frames_per_step, frames_per_update))
 
-        if pos_list is None:
-            exp.wait_until(exp.check_abort, blank_duration, draw="fix")
+    steps = info
+    stim_data = []
+
+    for step in steps:
+
+        if step is None:
+
+            # TODO dimming fixation task during blank?
+            exp.wait_until(exp.check_abort, exp.p.wait_blank, draw="fix")
             continue
 
-        for pos in pos_list:
+        for x, y, a in step:
 
-            exp.s.bar.update_pos(pos, angle)
+            exp.s.bar.update_pos(x, y, a)
 
             for frame, dropped in exp.frame_range(exp.p.step_duration,
                                                   yield_skipped=True):
 
                 if frame in update_frames or any(update_frames & set(dropped)):
                 
-                    if np.random.rand() < exp.p.oddball_prob and frame:
+                    if np.random.rand() < exp.p.oddball_prob:
+                        # TODO log times of these
+                        # TODO or determine them above
                         sf = exp.p.oddball_sf
                     else:
                         sf = exp.p.element_sf
                     exp.s.bar.update_elements(sf)
 
-                exp.draw(["bar", "ring", "fix"])
+                t = exp.draw(["bar", "ring", "fix"])
+                if not frame:
+                    stim_data.append((x, y, a, t))
 
             exp.check_abort()
+
+    info = stim_data
+    return info
+
+
+def serialize_trial_info(exp, info):
+
+    pass
+
+
+def compute_performance(exp):
+
+    return []
+
+
+def save_data(exp):
+
+    if exp.trial_data:
+        stim = exp.trial_data[0]
+        stim = pd.DataFrame(stim, columns=["x", "y", "a", "t"])
+        out_stim_fname = exp.output_stem + "_stim.csv"
+        stim.to_csv(out_stim_fname)
+
+
+def show_performance(exp):
+
+    exp.win.flip()

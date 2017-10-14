@@ -21,4 +21,10 @@ base = dict(
 
     drift_rate=.5,
 
+    wait_blank=12,
+
+    key="space",
+
+    output_template="data/{subject}/{session}/oddbar_{time}",
+
 )

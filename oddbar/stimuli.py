@@ -45,18 +45,18 @@ class RetBar(object):
             for _ in ["top", "bottom"]
         ]
 
-    def update_pos(self, pos, angle):
+    def update_pos(self, x, y, a):
 
-        theta = np.deg2rad(angle)
+        theta = np.deg2rad(a)
         mat = np.array([[np.cos(theta), -np.sin(theta)],
                         [np.sin(theta), np.cos(theta)]])
 
-        self.array.fieldPos = pos
+        self.array.fieldPos = x, y
         self.array.xys = mat.dot(self.xys.T).T
-        self.edges[0].pos = np.add(pos, mat.dot([0, +self.edge_offset]))
-        self.edges[1].pos = np.add(pos, mat.dot([0, -self.edge_offset]))
-        self.edges[0].ori = -angle
-        self.edges[1].ori = -angle
+        self.edges[0].pos = np.add((x, y), mat.dot([0, +self.edge_offset]))
+        self.edges[1].pos = np.add((x, y), mat.dot([0, -self.edge_offset]))
+        self.edges[0].ori = -a
+        self.edges[1].ori = -a
 
     def update_elements(self, sf=None):
 
