@@ -174,12 +174,41 @@ def run_trial(exp, info):
 
 def serialize_trial_info(exp, info):
 
-    pass
+    return pd.Series(dict(correct=np.nan, responded=True, rt=0)).to_json()
 
 
 def compute_performance(exp):
 
-    return []
+    if exp.trial_data:
+
+        _, task = exp.trial_data[0]
+
+        oddballs = task.query("event in ['bar', 'fix']")
+        responses = task.query("event == 'key'")
+
+        hits = 0
+        misses = 0
+        false_alarms = 0
+
+        for t in oddballs["time"]:
+
+            closest = (responses.time - t).min()
+            if 0 < closest < exp.p.response_window:
+                hits += 1
+            else:
+                misses += 1
+
+        for t in responses["time"]:
+
+            closest = (t - oddballs.time).min()
+            if not 0 < closest < exp.p.response_window:
+                false_alarms += 1
+
+    else:
+
+        hits = misses = false_alarms = None
+
+    return hits, misses, false_alarms
 
 
 def save_data(exp):
@@ -195,6 +224,32 @@ def save_data(exp):
         task.to_csv(out_task_fname, index=False)
 
 
-def show_performance(exp):
+def show_performance(exp, hits, misses, false_alarms):
 
     exp.win.flip()
+
+    lines = ["End of the run!"]
+
+    null_values = None, np.nan
+    if hits in null_values:
+        visual.TextStim(exp.win, lines[0],
+                        pos=(0, 0), height=.5).draw()
+        exp.win.flip()
+        return
+
+    hit_s = "" if hits == 1 else "s"
+    false_alarm_s = "" if false_alarms == 1 else "s"
+    lines.extend([
+        "",
+        "You detected {} oddball{}, missed {}".format(hits, hit_s, misses),
+        "and had {} false alarm{}!".format(false_alarms, false_alarm_s),
+        ])
+
+    if lines:
+        n = len(lines)
+        height = .5
+        heights = (np.arange(n)[::-1] - (n / 2 - .5)) * height
+        for line, y in zip(lines, heights):
+            visual.TextStim(exp.win, line,
+                            pos=(0, y), height=height).draw()
+        exp.win.flip()

@@ -26,9 +26,9 @@ base = dict(
     oddball_prob=.1,
     oddball_refract=3,
 
-    drift_rate=.5,
+    response_window=1,
 
-    wait_blank=12,
+    drift_rate=.5,
 
     key="space",
 
