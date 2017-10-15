@@ -5,7 +5,11 @@ base = dict(
 
     fix_radius=.1,
 
-    field_size=16,
+    fix_bar_color=(.8, .6, -.8),
+    fix_fix_color=(.8, .6, -.8),
+    fix_odd_color=(.45, .28, -.85),
+
+    field_size=20,
     step_duration=1.5,
 
     bar_width=1.5,

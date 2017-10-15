@@ -138,21 +138,28 @@ def run_trial(exp, info):
                 if step.bar:
                     sf = exp.p.oddball_sf if oddball else exp.p.element_sf
                     exp.s.bar.update_elements(sf)
+                    exp.s.fix.color = exp.p.fix_bar_color
+                else:
+                    if oddball:
+                        exp.s.fix.color = exp.p.fix_odd_color
+                    else:
+                        exp.s.fix.color = exp.p.fix_fix_color
 
             if step.bar:
-                t = exp.draw(["bar", "ring", "fix"])
+                stims = ["bar", "ring", "fix"]
             else:
-                t = exp.draw(["ring", "fix"])
+                stims = ["ring", "fix"]
+            t = exp.draw(stims)
 
             if not frame:
                 stim_data.append((t, step.bar, step.x, step.y, step.a))
 
                 if oddball:
-                    task_data.append((t, "bar"))
+                    kind = "bar" if step.bar else "fix"
+                    task_data.append((t, kind))
 
             exp.check_abort()
 
-    # TODO check keypresses
     keys = event.getKeys([exp.p.key], timeStamped=exp.clock)
     task_data.extend([(t, "key") for (_, t) in keys])
 
