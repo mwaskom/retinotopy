@@ -3,6 +3,8 @@ base = dict(
     display_name="macbook-air",
     display_luminance=35,
 
+    monitor_eye=True,
+
     fix_radius=.1,
 
     fix_bar_color=(.8, .6, -.8),
