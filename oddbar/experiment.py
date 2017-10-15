@@ -109,6 +109,8 @@ def run_trial(exp, info):
     # Everything is done in one "trial" for simplicity, though note that
     # this means no data are saved if the experiment crashes/is aborted.
 
+    event.clearEvents()
+
     framerate = exp.win.framerate
 
     frames_per_step = exp.p.step_duration * framerate
@@ -151,6 +153,8 @@ def run_trial(exp, info):
             exp.check_abort()
 
     # TODO check keypresses
+    keys = event.getKeys([exp.p.key], timeStamped=exp.clock)
+    task_data.extend([(t, "key") for (_, t) in keys])
 
     stim_cols = ["onset", "bar", "x", "y", "a"]
     stim_data = pd.DataFrame(stim_data, columns=stim_cols)
