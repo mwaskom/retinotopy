@@ -18,6 +18,7 @@ base = dict(
 
     oddball_sf=2,
     oddball_prob=.1,
+    oddball_refract=3,
 
     drift_rate=.5,
 

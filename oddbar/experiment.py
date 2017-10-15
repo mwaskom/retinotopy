@@ -5,6 +5,27 @@ from visigoth.stimuli import Point
 from stimuli import RetBar
 
 
+class OddBall(object):
+
+    def __init__(self, p, r):
+
+        self.p = p
+        self.r = r
+        self._rs = np.random.RandomState()
+        self._calls_since_true = 0
+
+    def __call__(self):
+
+        self._calls_since_true += 1
+        if self._calls_since_true < self.r:
+            return False
+        elif self._rs.rand() > self.p:
+            return False
+        else:
+            self._calls_since_true = 0
+            return True
+
+
 def create_stimuli(exp):
 
     exp.win.allowStencil = True
@@ -84,6 +105,10 @@ def run_trial(exp, info):
     steps = info
     stim_data = []
 
+    oddballer = OddBall(exp.p.oddball_prob, exp.p.oddball_refract)
+
+    task_data = []
+
     for step in steps:
 
         if step is None:
@@ -101,21 +126,20 @@ def run_trial(exp, info):
 
                 if frame in update_frames or any(update_frames & set(dropped)):
                 
-                    if np.random.rand() < exp.p.oddball_prob:
-                        # TODO log times of these
-                        # TODO or determine them above
-                        sf = exp.p.oddball_sf
-                    else:
-                        sf = exp.p.element_sf
+                    oddball = oddballer()
+
+                    sf = exp.p.oddball_sf if oddball else exp.p.element_sf
                     exp.s.bar.update_elements(sf)
 
                 t = exp.draw(["bar", "ring", "fix"])
                 if not frame:
-                    stim_data.append((x, y, a, t))
+                    stim_data.append((t, x, y, a))
+                    if oddball:
+                        task_data.append((t, "bar"))
 
             exp.check_abort()
 
-    info = stim_data
+    info = stim_data, task_data
     return info
 
 
@@ -132,10 +156,16 @@ def compute_performance(exp):
 def save_data(exp):
 
     if exp.trial_data:
-        stim = exp.trial_data[0]
-        stim = pd.DataFrame(stim, columns=["x", "y", "a", "t"])
+
+        stim, task = exp.trial_data[0]
+
+        stim = pd.DataFrame(stim, columns=["time", "x", "y", "a"])
         out_stim_fname = exp.output_stem + "_stim.csv"
-        stim.to_csv(out_stim_fname)
+        stim.to_csv(out_stim_fname, index=False)
+
+        task = pd.DataFrame(task, columns=["time", "event"])
+        out_task_fname = exp.output_stem + "_task.csv"
+        task.to_csv(out_task_fname, index=False)
 
 
 def show_performance(exp):
