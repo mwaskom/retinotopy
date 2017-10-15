@@ -65,11 +65,16 @@ def create_stimuli(exp):
 
 def generate_trials(exp):
 
-    def steps(start, end, a, n):
-        x = np.linspace(start[0], end[0], n)
-        y = np.linspace(start[1], end[1], n)
-        a = np.full(n, a, np.float)
-        return np.stack([x, y, a], 1)
+    def steps(bar, n, start=None, end=None, a=None):
+        if bar:
+            b = np.ones(n)
+            x = np.linspace(start[0], end[0], n)
+            y = np.linspace(start[1], end[1], n)
+            a = np.full(n, a, np.float)
+        else:
+            b = np.zeros(n)
+            x = y = a = np.full(n, np.nan)
+        return np.stack([b, x, y, a], 1)
 
     field_radius = exp.p.field_size / 2
     diag = np.cos(np.pi / 4) * field_radius
@@ -85,16 +90,24 @@ def generate_trials(exp):
     C = 0, 0
 
     steps = [
-        steps(L, R, 90, 16), steps(BR, C, 45, 8), None,
-        steps(T, B, 0, 16), steps(BL, C, -45, 8), None,
-        steps(R, L, 90, 16), steps(TL, C, 45, 8), None,
-        steps(B, T, 0, 16), steps(TR, C, -45, 8), None,
+        steps(True, 16, L, R, 90), steps(True, 8, BR, C, 45), steps(False, 8),
+        steps(True, 16, T, B, 0), steps(True, 8, BL, C, -45), steps(False, 8),
+        steps(True, 16, R, L, 90), steps(True, 8, TL, C, 45), steps(False, 8),
+        steps(True, 16, B, T, 0), steps(True, 8, TR, C, -45), steps(False, 8),
     ]
+
+    dur = exp.p.step_duration
+    steps = np.concatenate(steps, 0)
+    steps = pd.DataFrame(steps, columns=["bar", "x", "y", "a"])
+    steps["offset"] = np.arange(len(steps)) * dur + dur
 
     yield steps
 
 
 def run_trial(exp, info):
+
+    # Everything is done in one "trial" for simplicity, though note that
+    # this means no data are saved if the experiment crashes/is aborted.
 
     framerate = exp.win.framerate
 
@@ -109,33 +122,33 @@ def run_trial(exp, info):
 
     task_data = []
 
-    for step in steps:
+    for _, step in steps.iterrows():
 
-        if step is None:
+        if step.bar:
+            exp.s.bar.update_pos(step.x, step.y, step.a)
 
-            # TODO dimming fixation task during blank?
-            exp.wait_until(exp.check_abort, exp.p.wait_blank, draw="fix")
-            continue
+        for frame, dropped in exp.frame_range(exp.p.step_duration,
+                                              expected_offset=step.offset,
+                                              yield_skipped=True):
 
-        for x, y, a in step:
+            if frame in update_frames or any(update_frames & set(dropped)):
 
-            exp.s.bar.update_pos(x, y, a)
+                oddball = oddballer()
 
-            for frame, dropped in exp.frame_range(exp.p.step_duration,
-                                                  yield_skipped=True):
-
-                if frame in update_frames or any(update_frames & set(dropped)):
-                
-                    oddball = oddballer()
-
+                if step.bar:
                     sf = exp.p.oddball_sf if oddball else exp.p.element_sf
                     exp.s.bar.update_elements(sf)
 
+            if step.bar:
                 t = exp.draw(["bar", "ring", "fix"])
-                if not frame:
-                    stim_data.append((t, x, y, a))
-                    if oddball:
-                        task_data.append((t, "bar"))
+            else:
+                t = exp.draw(["ring", "fix"])
+
+            if not frame:
+                stim_data.append((t, step.bar, step.x, step.y, step.a))
+
+                if oddball:
+                    task_data.append((t, "bar"))
 
             exp.check_abort()
 
@@ -159,7 +172,7 @@ def save_data(exp):
 
         stim, task = exp.trial_data[0]
 
-        stim = pd.DataFrame(stim, columns=["time", "x", "y", "a"])
+        stim = pd.DataFrame(stim, columns=["onset", "bar", "x", "y", "a"])
         out_stim_fname = exp.output_stem + "_stim.csv"
         stim.to_csv(out_stim_fname, index=False)
 
