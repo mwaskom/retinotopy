@@ -115,14 +115,12 @@ def run_trial(exp, info):
     frames_per_update = framerate / exp.p.update_rate
     update_frames = set(np.arange(0, frames_per_step, frames_per_update))
 
-    steps = info
-    stim_data = []
-
     oddballer = OddBall(exp.p.oddball_prob, exp.p.oddball_refract)
 
+    stim_data = []
     task_data = []
 
-    for _, step in steps.iterrows():
+    for _, step in info.iterrows():
 
         if step.bar:
             exp.s.bar.update_pos(step.x, step.y, step.a)
@@ -152,8 +150,15 @@ def run_trial(exp, info):
 
             exp.check_abort()
 
-    info = stim_data, task_data
-    return info
+    # TODO check keypresses
+
+    stim_cols = ["onset", "bar", "x", "y", "a"]
+    stim_data = pd.DataFrame(stim_data, columns=stim_cols)
+
+    task_cols = ["time", "event"]
+    task_data = pd.DataFrame(task_data, columns=task_cols)
+
+    return stim_data, task_data
 
 
 def serialize_trial_info(exp, info):
@@ -172,11 +177,9 @@ def save_data(exp):
 
         stim, task = exp.trial_data[0]
 
-        stim = pd.DataFrame(stim, columns=["onset", "bar", "x", "y", "a"])
         out_stim_fname = exp.output_stem + "_stim.csv"
         stim.to_csv(out_stim_fname, index=False)
 
-        task = pd.DataFrame(task, columns=["time", "event"])
         out_task_fname = exp.output_stem + "_task.csv"
         task.to_csv(out_task_fname, index=False)
 
