@@ -5,16 +5,14 @@ from scipy.spatial.distance import cdist
 from visigoth.stimuli import ElementArray
 
 
-class RetBar(object):
+class Patch(object):
 
-    def __init__(self, win, field_size, bar_width,
+    def __init__(self, win, patch_size,
                  element_size, element_tex, element_sf,
                  drift_rate):
 
-        bar_length = field_size + 2 * element_size
-        xys = poisson_disc_sample(bar_length, bar_width, element_size / 4)
+        xys = poisson_disc_sample(patch_size * 2, element_size / 4)
         self.xys = xys
-        self.edge_offset = bar_width / 2 + element_size / 2
         self.drift_step = drift_rate / win.framerate
 
         self.element_size = element_size
@@ -22,7 +20,6 @@ class RetBar(object):
         self.element_sf = element_sf
 
         self.array = ElementArray(
-
             win,
             xys=xys,
             nElements=len(xys),
@@ -34,32 +31,24 @@ class RetBar(object):
         self.array.pedestal_contrs = 1
         self.update_elements()
 
-        self.edges = [
-            visual.Rect(
-                win,
-                width=field_size,
-                height=element_size,
-                fillColor=win.color,
-                lineWidth=0,
-            )
-            for _ in ["top", "bottom"]
-        ]
+        a = np.deg2rad(np.r_[0:363:3, 360:-3:-3, 0])
+        r = np.r_[np.full(121, 1.), np.full(121, 2.), [1.]]
+        vertices = np.c_[np.cos(a) * r, np.sin(a) * r]
+        self.edge = visual.ShapeStim(
+            win,
+            vertices=vertices,
+            size=patch_size,
+            fillColor=win.color,
+            lineColor=win.color,
+        )
 
-    def update_pos(self, x, y, a):
-
-        theta = np.deg2rad(a)
-        mat = np.array([[np.cos(theta), -np.sin(theta)],
-                        [np.sin(theta), np.cos(theta)]])
+    def update_pos(self, x, y):
 
         self.array.fieldPos = x, y
-        self.array.xys = mat.dot(self.xys.T).T
-        self.edges[0].pos = np.add((x, y), mat.dot([0, +self.edge_offset]))
-        self.edges[1].pos = np.add((x, y), mat.dot([0, -self.edge_offset]))
-        self.edges[0].ori = -a
-        self.edges[1].ori = -a
+        self.edge.pos = x, y
 
     def update_elements(self, sf=None):
-
+        # TODO copied from bar: abstract and standardize!
         n = len(self.xys)
         self.array.xys = np.random.permutation(self.array.xys)
         self.array.oris = np.random.uniform(0, 360, n)
@@ -70,11 +59,10 @@ class RetBar(object):
 
         self.array.phases += self.drift_step
         self.array.draw()
-        for edge in self.edges:
-            edge.draw()
+        self.edge.draw()
 
 
-def poisson_disc_sample(length, width, radius=.5, candidates=20, seed=None):
+def poisson_disc_sample(size, radius=.5, candidates=20, seed=None):
     """Find positions using poisson-disc sampling."""
     # See http://bost.ocks.org/mike/algorithms/
     rs = np.random.RandomState(seed)
@@ -100,7 +88,7 @@ def poisson_disc_sample(length, width, radius=.5, candidates=20, seed=None):
             x, y = s_x + r * np.cos(a), s_y + r * np.sin(a)
 
             # Check the three conditions to accept the candidate
-            in_array = (0 < x < length) & (0 < y < width)
+            in_array = np.sqrt(x ** 2 + y ** 2) < (size / 2)
             in_ring = np.all(cdist(samples, [(x, y)]) > radius)
 
             if in_array and in_ring:
@@ -113,8 +101,5 @@ def poisson_disc_sample(length, width, radius=.5, candidates=20, seed=None):
             # We've exhausted the particular sample
             queue.pop(s_idx)
 
-    # Remove first sample
-    samples = np.array(samples)[1:]
-
-    return samples - [(length / 2, width / 2)]
+    return samples
 
