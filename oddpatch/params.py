@@ -12,8 +12,12 @@ base = dict(
 
     update_rate=2,
 
+    stim_duration=1.5,
+    resp_duration=1.2,
+    iti_unit=1.5,
+
     oddball_sf=2,
-    oddball_prob=.2,
+    oddballs=6,
 
     drift_rate=.5,
 

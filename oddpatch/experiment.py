@@ -29,17 +29,54 @@ def create_stimuli(exp):
 
 def generate_trials(exp):
 
+    # Set up the grid of positions
     a, r = np.r_[0:360:30], [4, 7, 10]
     aa, rr = np.meshgrid(a, r)
     aa, rr = np.deg2rad(aa.ravel()), rr.ravel()
-    xx, yy = np.cos(aa) * rr, np.sin(aa) * rr
+    xys = np.c_[np.cos(aa) * rr, np.sin(aa) * rr]
 
-    for x, y in zip(xx, yy):
+    # Set up the iti timing
+    counts = [12, 9, 6, 4, 3, 2]
+    durations = np.arange(0, 6 * exp.p.iti_unit, exp.p.iti_unit)
+    iti = np.concatenate([
+        np.full(c, d) for c, d in zip(counts,durations)
+    ])
+
+    # Set up oddballs
+    oddball = np.zeros(36)
+    oddball[:exp.p.oddballs] = 1
+
+    # Randomize trials
+    xx, yy = np.random.permutation(xys).T
+    iti[1:] = np.random.permutation(iti[1:])
+    oddball = np.random.permutation(oddball)
+
+    # Compute expected stimulus offset
+    trial_duration = iti + exp.p.stim_duration + exp.p.resp_duration
+    offset = trial_duration.cumsum() - exp.p.resp_duration
+
+    # Combine into one data structure
+    trials = pd.DataFrame(dict(
+        x=xx,
+        y=yy,
+        iti=iti,
+        oddball=oddball,
+        offset=offset,
+    ))
+
+    for _, t in trials.iterrows():
 
         info = exp.trial_info(
 
-            x=x,
-            y=y,
+            x=t.x,
+            y=t.y,
+            iti=t.iti,
+            oddball=t.oddball,
+            offset=t.offset,
+
+            stim_onset=np.nan,
+            responsed=np.nan,
+            rt=np.nan,
 
         )
 
@@ -48,8 +85,33 @@ def generate_trials(exp):
 
 def run_trial(exp, info):
 
+    # Update stimulus
     exp.s.patch.update_pos(info.x, info.y)
-    exp.wait_until(timeout=.5, draw=["patch", "fix"])
-    exp.wait_until(timeout=.2, draw=["fix"])
+
+    # Inter-trial interval
+    exp.wait_until(exp.iti_end, draw="fix", iti_duration=info.iti)
+
+    # Stimulus period
+    framerate = exp.win.framerate
+    frames_per_stim = exp.p.stim_duration * framerate
+    frames_per_update = framerate / exp.p.update_rate
+    update_frames = set(np.arange(0, frames_per_stim, frames_per_update))
+
+    for frame, dropped in exp.frame_range(exp.p.stim_duration,
+                                          expected_offset=info.offset,
+                                          yield_skipped=True):
+
+        if frame in update_frames or any(update_frames & set(dropped)):
+            sf = exp.p.oddball_sf if info.oddball else exp.p.element_sf
+            exp.s.patch.update_elements(sf)
+
+        t = exp.draw(["patch", "fix"])
+        if not frame:
+            info["stim_onset"] = t
+
+    # Post-stimulus period
+    exp.wait_until(timeout=exp.p.resp_duration, draw="fix")
+
+    # TODO handle keypresses
 
     return info
