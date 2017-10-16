@@ -23,6 +23,8 @@ base = dict(
 
     key="space",
 
+    run_duration=199.5,
+
     output_template="data/{subject}/{session}/oddpatch_{time}",
 
 )
