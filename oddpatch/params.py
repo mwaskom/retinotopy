@@ -31,6 +31,8 @@ train = base.copy()
 train.update(
 
     display_name="kianilab-ps1",
+    monitor_eye=True,
+
 )
 
 
@@ -41,6 +43,7 @@ scan.update(
     eye_host_address="192.168.1.5",
     key="1",
     monitor_eye=True,
+    trigger=["5"],
+    pre_trigger_stim="fix",
 
 )
-
