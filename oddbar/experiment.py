@@ -159,7 +159,7 @@ def run_trial(exp, info):
                     kind = "bar" if step.bar else "fix"
                     task_data.append((t, kind))
 
-            exp.check_abort()
+        exp.check_abort()
 
     keys = event.getKeys([exp.p.key], timeStamped=exp.clock)
     task_data.extend([(t, "key") for (_, t) in keys])
@@ -193,16 +193,18 @@ def compute_performance(exp):
 
         for t in oddballs["time"]:
 
-            closest = (responses.time - t).min()
-            if 0 < closest < exp.p.response_window:
+            rel_resp_time = responses.time - t
+            closest = rel_resp_time[rel_resp_time > 0].min()
+            if closest < exp.p.response_window:
                 hits += 1
             else:
                 misses += 1
 
         for t in responses["time"]:
 
-            closest = (t - oddballs.time).min()
-            if not 0 < closest < exp.p.response_window:
+            rel_resp_time = t - oddballs.time
+            closest = rel_resp_time[rel_resp_time > 0].min()
+            if not closest < exp.p.response_window:
                 false_alarms += 1
 
     else:
