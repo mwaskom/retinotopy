@@ -1,7 +1,7 @@
 from __future__ import division
 import numpy as np
 import pandas as pd
-from psychopy import event
+from psychopy import core, event, visual
 from visigoth.stimuli import Point
 from stimuli import Patch
 
@@ -39,7 +39,7 @@ def generate_trials(exp):
     counts = [12, 9, 6, 4, 3, 2]
     durations = np.arange(0, 6 * exp.p.iti_unit, exp.p.iti_unit)
     iti = np.concatenate([
-        np.full(c, d) for c, d in zip(counts,durations)
+        np.full(c, d) for c, d in zip(counts, durations)
     ])
 
     # Set up oddballs
@@ -53,31 +53,24 @@ def generate_trials(exp):
 
     # Compute expected stimulus offset
     trial_duration = iti + exp.p.stim_duration + exp.p.resp_duration
-    offset = trial_duration.cumsum() - exp.p.resp_duration
+    should_offset = trial_duration.cumsum() - exp.p.resp_duration
 
     # Combine into one data structure
     trials = pd.DataFrame(dict(
         x=xx,
         y=yy,
+        a=aa,
+        r=rr,
         iti=iti,
-        oddball=oddball,
-        offset=offset,
+        oddball=oddball.astype(bool),
+        should_offset=should_offset,
     ))
 
     for _, t in trials.iterrows():
 
         info = exp.trial_info(
-
-            x=t.x,
-            y=t.y,
-            iti=t.iti,
-            oddball=t.oddball,
-            offset=t.offset,
-
             stim_onset=np.nan,
-            responsed=np.nan,
-            rt=np.nan,
-
+            **t.to_dict()
         )
 
         yield pd.Series(info)
@@ -97,8 +90,12 @@ def run_trial(exp, info):
     frames_per_update = framerate / exp.p.update_rate
     update_frames = set(np.arange(0, frames_per_stim, frames_per_update))
 
+    trial_clock = core.Clock()
+    event.clearEvents()
+
+    stim_offset = info.should_offset
     for frame, dropped in exp.frame_range(exp.p.stim_duration,
-                                          expected_offset=info.offset,
+                                          expected_offset=stim_offset,
                                           yield_skipped=True):
 
         if frame in update_frames or any(update_frames & set(dropped)):
@@ -107,11 +104,79 @@ def run_trial(exp, info):
 
         t = exp.draw(["patch", "fix"])
         if not frame:
+            trial_clock.reset()
             info["stim_onset"] = t
 
     # Post-stimulus period
-    exp.wait_until(timeout=exp.p.resp_duration, draw="fix")
+    resp_offset = info.should_offset + exp.p.resp_duration
+    for frame in exp.frame_range(exp.p.resp_duration,
+                                 expected_offset=resp_offset):
+        exp.draw("fix")
 
-    # TODO handle keypresses
+    # Check responses
+    keys = event.getKeys([exp.p.key], timeStamped=trial_clock)
+    if keys:
+        _, rt = keys[0]
+        info["responded"] = True
+        info["rt"] = rt
+        info["correct"] = bool(info.oddball)
+    else:
+        info["responded"] = False
+        info["correct"] = not info.oddball
 
     return info
+
+
+def compute_performance(exp):
+
+    if exp.trial_data:
+
+        trials = pd.DataFrame(exp.trial_data)
+
+        oddball = trials.oddball.fillna(0).astype(bool)
+        responded = trials.responded.fillna(0).astype(bool)
+
+        print(oddball)
+        print(responded)
+
+        hits = (oddball & responded).sum()
+        misses = (oddball & ~responded).sum()
+        false_alarms = (~oddball & responded).sum()
+
+    else:
+
+        hits = misses = false_alarms = None
+
+    return hits, misses, false_alarms
+
+
+def show_performance(exp, hits, misses, false_alarms):
+
+    # TODO copied from oddbar
+    exp.win.flip()
+
+    lines = ["End of the run!"]
+
+    null_values = None, np.nan
+    if hits in null_values:
+        visual.TextStim(exp.win, lines[0],
+                        pos=(0, 0), height=.5).draw()
+        exp.win.flip()
+        return
+
+    hit_s = "" if hits == 1 else "s"
+    false_alarm_s = "" if false_alarms == 1 else "s"
+    lines.extend([
+        "",
+        "You detected {} oddball{}, missed {},".format(hits, hit_s, misses),
+        "and had {} false alarm{}!".format(false_alarms, false_alarm_s),
+        ])
+
+    if lines:
+        n = len(lines)
+        height = .5
+        heights = (np.arange(n)[::-1] - (n / 2 - .5)) * height
+        for line, y in zip(lines, heights):
+            visual.TextStim(exp.win, line,
+                            pos=(0, y), height=height).draw()
+        exp.win.flip()
