@@ -3,8 +3,6 @@ base = dict(
     display_name="macbook-air",
     display_luminance=35,
 
-    monitor_eye=True,
-
     fix_radius=.1,
 
     fix_bar_color=(.8, .6, -.8),
@@ -33,5 +31,21 @@ base = dict(
     key="space",
 
     output_template="data/{subject}/{session}/oddbar_{time}",
+
+)
+
+train = base.copy()
+train.update(
+
+    display_name="kianilab-ps1",
+)
+
+
+scan = base.copy()
+scan.update(
+
+    display_name="nyu-cbi-propixx",
+    eye_host_address="192.168.1.5",
+    monitor_eye=True,
 
 )
