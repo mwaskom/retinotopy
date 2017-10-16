@@ -5,7 +5,7 @@ base = dict(
 
     fix_radius=.1,
 
-    patch_size=3,
+    patch_size=2,  # TODO actually radius
     element_size=2,
     element_tex="saw",
     element_sf=1.5,
@@ -13,7 +13,7 @@ base = dict(
     update_rate=2,
 
     stim_duration=1.5,
-    resp_duration=1.2,
+    resp_duration=1.5,
     iti_unit=1.5,
 
     oddball_sf=2,
