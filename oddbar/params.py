@@ -9,7 +9,7 @@ base = dict(
     fix_fix_color=(.8, .6, -.8),
     fix_odd_color=(.45, .28, -.85),
 
-    field_size=20,
+    field_size=24,
     step_duration=1.5,
 
     bar_width=1.5,
@@ -46,6 +46,7 @@ scan.update(
 
     display_name="nyu-cbi-propixx",
     eye_host_address="192.168.1.5",
+    key="1",
     monitor_eye=True,
 
 )
