@@ -132,7 +132,9 @@ def run_trial(exp, info):
                                               expected_offset=step.offset,
                                               yield_skipped=True):
 
-            if frame in update_frames or any(update_frames & set(dropped)):
+            update = (frame in update_frames
+                      or any(update_frames & set(dropped)))
+            if update:
 
                 oddball = oddballer()
 
@@ -155,9 +157,9 @@ def run_trial(exp, info):
             if not frame:
                 stim_data.append((t, step.bar, step.x, step.y, step.a))
 
-                if oddball:
-                    kind = "bar" if step.bar else "fix"
-                    task_data.append((t, kind))
+            if update and oddball:
+                kind = "bar" if step.bar else "fix"
+                task_data.append((t, kind))
 
         exp.check_abort()
 
@@ -244,7 +246,7 @@ def show_performance(exp, hits, misses, false_alarms):
     false_alarm_s = "" if false_alarms == 1 else "s"
     lines.extend([
         "",
-        "You detected {} oddball{}, missed {}".format(hits, hit_s, misses),
+        "You detected {} oddball{}, missed {},".format(hits, hit_s, misses),
         "and had {} false alarm{}!".format(false_alarms, false_alarm_s),
         ])
 
